@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { LineChart } from "../components/LineChart";
 import { MachineList } from "../components/MachineList/MachineList";
 import "./page.css";
@@ -21,7 +21,7 @@ interface Props {
   machines: Machine[];
   initialMachineId: string;
   initialChartData: any[];
-  fetchMachineData: (machineId: string, sensor: string, unit: string) => Promise<any[]>;
+  fetchMachineData: (machineId: string, sensor: string) => Promise<any[]>;
 }
 
 const generateHeatmapData = () => {
@@ -36,19 +36,21 @@ const generateHeatmapData = () => {
 export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, fetchMachineData }: Props) {
   const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
   const [sensorType, setSensorType] = useState<string>("inlet_temperature_C");
-  const [unit, setUnit] = useState<string>("metric");
   const [chartData, setChartData] = useState<any[]>(initialChartData);
-  const [heatmapData, setHeatmapData] = useState<{ day: number; value: number }[]>([]);
+
+  const heatmapData = useMemo(() => generateHeatmapData(), [selectedMachine]);
 
   useEffect(() => {
-    setHeatmapData(generateHeatmapData());
-  }, [selectedMachine]);
-
+    if (initialMachineId) {
+      setSelectedMachine(initialMachineId);
+    }
+  }, [initialMachineId]);
+  
   useEffect(() => {
     if (selectedMachine) {
-      fetchMachineData(selectedMachine, sensorType, unit).then(data => setChartData(data));
+      fetchMachineData(selectedMachine, sensorType).then(data => setChartData(data));
     }
-  }, [selectedMachine, sensorType, unit, fetchMachineData]);
+  }, [selectedMachine, sensorType, fetchMachineData]);
 
   const getColorClass = (value: number) => {
     switch (value) {
@@ -82,11 +84,6 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
                   <option value="inlet_temperature_C">Inlet Temperature</option>
                   <option value="vibration">Vibration</option>
                   <option value="pressure">Pressure</option>
-                </select>
-                <label>Unit :</label>
-                <select value={unit} onChange={(e) => setUnit(e.target.value)}>
-                  <option value="metric">Metric</option>
-                  <option value="imperial">Imperial</option>
                 </select>
               </div>
             </div>

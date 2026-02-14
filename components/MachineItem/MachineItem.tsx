@@ -26,7 +26,7 @@ export const MachineItem = ({ machine }: { machine: MachineProps }) => {
   const config = getStatusConfig(machine.status);
 
   return (
-    <Link href={`/machine`} className="machine-item">
+    <Link href={`/machine?id=${machine.name}`} className="machine-item">
       <div>
         <div className="machine-name">{machine.name}</div>
         <div className="machine-zone">{machine.zone}</div>
