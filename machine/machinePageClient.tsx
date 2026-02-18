@@ -24,6 +24,7 @@ interface Props {
   initialMachineId: string;
   initialChartData: MachineChartData[];
   initialSensor: string;
+  metricsName: string[];
   fetchMachineData: (machineId: string, sensor: string) => Promise<MachineChartData[]>;
 }
 
@@ -36,7 +37,7 @@ const generateHeatmapData = () => {
   return data;
 };
 
-export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, initialSensor, fetchMachineData }: Props) {
+export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, initialSensor, metricsName, fetchMachineData }: Props) {
   const router = useRouter();
   const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
   const [sensorType, setSensorType] = useState<string>(initialSensor);
@@ -49,7 +50,7 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
       ...series,
       values: series.values.map(v => ({
         ...v,
-        time: new Date(v.time).toLocaleTimeString()
+        time: new Date(v.time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       }))
     }));
   }, [chartData]);
@@ -98,16 +99,20 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
   return (
     <main className="dashboard">
       <div className="main-container">
+        <div className="machine-header-title block md:hidden pt-6 px-4 pb-0 text-center text-2xl font-bold text-[#35699f] capitalize">
+          {selectedMachine || 'Select a machine'}
+        </div>
+
         <aside className="machine-sidebar">
           <MachineList 
             groups={groups}
             machines={machines}
-            selectedMachine={selectedMachine}
+            selectedMachines={selectedMachine ? [selectedMachine] : []}
             onSelectMachine={handleSelectMachine}
           />
         </aside>
         <section className="machine-content">
-          <div className="machine-header-title">{selectedMachine || 'Select a machine'}</div>
+          <div className="machine-header-title hidden md:block">{selectedMachine || 'Select a machine'}</div>
           
           <div className="content-top-row">
             <div className="widget live-data-widget">
@@ -116,11 +121,13 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
                   <LineChart chartData={formattedChartData} />
               </div>
               <div className="sensor-selector">
-                <label>Sensor :</label>
+                <label>Sensor:</label>
                 <select value={sensorType} onChange={(e) => handleSensorChange(e.target.value)}>
-                  <option value="inlet_temperature_C">Inlet Temperature</option>
-                  <option value="vibration">Vibration</option>
-                  <option value="pressure">Pressure</option>
+                  {metricsName.map(metric => (
+                    <option key={metric} value={metric}>
+                      {metric}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

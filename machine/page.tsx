@@ -31,18 +31,37 @@ interface PrometheusResponse {
   };
 }
 
+export async function getMetrics(): Promise<string[]> {
+  "use server";
+  try {
+    const host = process.env.PROMETHEUS_HOST || 'victoriametrics';
+    const port = process.env.PROMETHEUS_PORT || '8428';
+    const res = await fetch(`http://${host}:${port}/api/v1/label/__name__/values`, { cache: 'no-store' });
+    const data = await res.json();
+    if (data.status === 'success' && Array.isArray(data.data)) {
+      return data.data;
+    }
+    return [];
+  } catch (error) {
+    return [];
+  }
+}
+
 export async function getMachineData(machineId: string, sensorType: string): Promise<MachineChartData[]> {
   "use server";
   try {
     const host = process.env.PROMETHEUS_HOST || 'victoriametrics';
     const port = process.env.PROMETHEUS_PORT || '8428';
-    const site = 'site_1'; // Make it dynamic
+    const site = 'site_1'; 
     const end = Math.floor(Date.now() / 1000);
-    const start = end - 3600;
-    const step = 240; 
+    const timeRangeHours = 120;
+    const start = end - (timeRangeHours * 3600);
+    const step = 3600; 
+    const promQuery = `{__name__="${sensorType}", site="${site}"}`;
+    const encodedQuery = encodeURIComponent(promQuery);
 
     const res = await fetch(
-      `http://${host}:${port}/api/v1/query_range?query=${sensorType}{site="${site}"}&start=${start}&end=${end}&step=${step}`,
+      `http://${host}:${port}/api/v1/query_range?query=${encodedQuery}&start=${start}&end=${end}&step=${step}`,
       { cache: 'no-store' }
     );
     
@@ -70,7 +89,6 @@ export async function getMachineData(machineId: string, sensorType: string): Pro
     }
     return [];
   } catch (error) {
-    console.error('Error fetching machine data:', error);
     return [];
   }
 }
@@ -91,7 +109,13 @@ export default async function MachinePage({
     ? resolvedSearchParams.id[0] 
     : resolvedSearchParams?.id;
 
-  const sensor = (resolvedSearchParams?.sensor as string) || "inlet_temperature_C";
+  let sensor = (resolvedSearchParams?.sensor as string) || "inlet_temperature_C";
+
+  const metricsName = await getMetrics();
+  
+  if (metricsName.length > 0 && !metricsName.includes(sensor)) {
+      sensor = metricsName[0];
+  }
 
   let initialMachineId = machines?.[0]?.name || "";
   if (queriedId) {
@@ -107,6 +131,7 @@ export default async function MachinePage({
       initialMachineId={initialMachineId}
       initialChartData={initialChartData}
       initialSensor={sensor}
+      metricsName={metricsName}
       fetchMachineData={getMachineData}
     />
   );

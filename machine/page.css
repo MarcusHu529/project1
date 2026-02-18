@@ -44,7 +44,7 @@ body {
 }
 
 .machine-sidebar {
-    @apply w-64 bg-[#d1e1f0] m-6 rounded-[30px] p-6 flex flex-col gap-4 overflow-y-auto;
+    @apply m-6 md:m-8 md:mr-0 z-50;
 }
 
 .nav-section {
@@ -158,11 +158,11 @@ table {
 }
 
 th { 
-    @apply text-gray-400 font-medium pb-2; 
+    @apply text-gray-400 font-medium pb-2 px-4; 
 }
 
 td { 
-    @apply py-2 border-t border-gray-100; 
+    @apply py-3 px-4 border-t border-gray-100; 
 }
 
 .content-bottom-row {
@@ -175,7 +175,7 @@ td {
 
 @media (max-width: 670px) {
     .dashboard {
-        @apply p-2 h-auto;
+        @apply p-2 h-auto pb-24;
     }
 
     .main-container {
@@ -183,7 +183,7 @@ td {
     }
 
     .machine-sidebar {
-        @apply w-full m-0 rounded-t-[20px] rounded-b-none p-4 h-auto max-h-none overflow-visible relative;
+        @apply w-full m-0 p-4 h-auto max-h-none overflow-visible relative;
         z-index: 50;
     }
 
@@ -202,13 +202,12 @@ td {
 
     .live-data-widget, 
     .stats-column, 
-    .alert-history, 
     .common-issues-heatmap {
         @apply w-full;
     }
 
     .alert-history {
-        @apply overflow-x-auto;
+        @apply overflow-x-auto w-full block;
     }
 
     .prediction-grid {
@@ -216,7 +215,7 @@ td {
     }
 
     .machine-header-title {
-        @apply text-2xl text-center;
+        @apply hidden;
     }
 
     .heatmap-grid-container {
@@ -234,7 +233,7 @@ td {
     }
 
     table {
-        @apply block overflow-x-auto whitespace-nowrap;
+        @apply table whitespace-nowrap;
         min-width: 700px;
     }
 }
