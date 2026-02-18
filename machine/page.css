@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+body {
+    background: linear-gradient(to right, #7db4d6, #35699f);
+    color: #000000;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    overflow-y: auto;
+    margin: 0;
+}
+
+.dashboard {
+    @apply w-full p-4 flex flex-col;
+    min-height: calc(100vh - 80px); 
+}
+
+.main-container {
+    @apply flex-1 bg-white/90 rounded-[40px] shadow-2xl flex;
+    backdrop-filter: blur(10px);
+}
+.common-issues-heatmap {
+    @apply col-span-2 bg-white p-6 rounded-2xl flex flex-col gap-4;
+}
+
+.heatmap-header h2 {
+    @apply text-xl font-bold text-[#35699f] m-0;
+}
+
+.heatmap-grid-container {
+    @apply flex-1 overflow-hidden py-2;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    grid-auto-flow: column;
+    gap: 4px;
+    height: 100%;
+}
+
+.heatmap-cell {
+    @apply rounded-sm aspect-square transition-all duration-200 hover:ring-2 hover:ring-offset-1 hover:ring-gray-300;
+}
+
+.machine-sidebar {
+    @apply w-64 bg-[#d1e1f0] m-6 rounded-[30px] p-6 flex flex-col gap-4 overflow-y-auto;
+}
+
+.nav-section {
+    @apply mb-4;
+}
+
+.nav-header {
+    @apply bg-[#9FBFD7] text-white px-4 py-1 rounded-md text-center font-bold mb-2;
+}
+
+.nav-item {
+    @apply w-full text-center px-4 py-1 mb-1 border border-[#8ea8c5] rounded-md text-[#4a6b8a] font-semibold text-sm hover:bg-white transition;
+}
+
+.nav-item.active {
+    @apply bg-[#2b5a7a] text-white border-[#2b5a7a];
+}
+
+.machine-content {
+    @apply flex-1 p-8 flex flex-col gap-6 overflow-y-auto;
+}
+
+.content-top-row {
+    @apply grid grid-cols-5 gap-6;
+}
+
+.live-data-widget {
+    @apply col-span-3;
+}
+
+.chart-container {
+    @apply min-h-[300px] mb-4;
+}
+
+.sensor-selector {
+    @apply flex items-center gap-2;
+}
+
+.sensor-selector label {
+    @apply font-semibold;
+}
+
+.sensor-selector select {
+    @apply px-3 py-1 border border-gray-300 rounded-md;
+}
+
+.stats-column {
+    @apply col-span-2 flex flex-col gap-4;
+}
+
+.machine-header-title {
+    @apply text-3xl font-bold text-[#35699f] capitalize mb-2;
+}
+
+.widget {
+    @apply bg-white rounded-2xl p-6;
+}
+
+.widget h2 {
+    @apply text-xl font-bold text-[#35699f] mb-4;
+}
+
+.prediction-grid {
+    @apply grid grid-cols-2 gap-3 flex-1;
+    grid-auto-rows: 1fr;
+}
+
+.prediction-box {
+    @apply p-4 rounded-2xl flex flex-col justify-center flex-1;
+}
+
+.prediction-box.purple { 
+    @apply bg-[#9593FC] text-white; 
+}
+
+.prediction-box.light-gray { 
+    @apply bg-[#d9d9d9] text-sm; 
+}
+
+.prediction-box .value { 
+    @apply text-3xl font-bold; 
+}
+
+.prediction-box .label { 
+    @apply text-xl font-bold uppercase mb-1 ; 
+}
+
+.prediction-box .sub-label {
+    @apply text-xs opacity-80 mt-1;
+}
+
+.issues-box ol,
+.prediction-box ol {
+    @apply list-none p-0 m-0 space-y-1 font-medium;
+}
+
+.alert-history {
+    @apply flex-1;
+}
+
+.widget-header {
+    @apply flex items-center gap-4 mb-2;
+}
+
+.edit-btn {
+    @apply bg-gray-200 px-3 py-1 rounded-full text-xs font-bold hover:bg-gray-300 transition;
+}
+
+table {
+    @apply w-full text-left text-xs;
+}
+
+th { 
+    @apply text-gray-400 font-medium pb-2; 
+}
+
+td { 
+    @apply py-2 border-t border-gray-100; 
+}
+
+.content-bottom-row {
+    @apply grid grid-cols-5 gap-6;
+}
+
+.alert-history { 
+    @apply col-span-3; 
+}
+
+@media (max-width: 670px) {
+    .dashboard {
+        @apply p-2 h-auto;
+    }
+
+    .main-container {
+        @apply flex-col rounded-[20px] shadow-none h-auto;
+    }
+
+    .machine-sidebar {
+        @apply w-full m-0 rounded-t-[20px] rounded-b-none p-4 h-auto max-h-none overflow-visible relative;
+        z-index: 50;
+    }
+
+    .machine-sidebar * {
+        @apply overflow-visible;
+    }
+
+    .machine-content {
+        @apply p-4 gap-6 h-auto overflow-visible;
+    }
+
+    .content-top-row, 
+    .content-bottom-row {
+        @apply flex flex-col gap-6;
+    }
+
+    .live-data-widget, 
+    .stats-column, 
+    .alert-history, 
+    .common-issues-heatmap {
+        @apply w-full;
+    }
+
+    .alert-history {
+        @apply overflow-x-auto;
+    }
+
+    .prediction-grid {
+        @apply grid-cols-1;
+    }
+
+    .machine-header-title {
+        @apply text-2xl text-center;
+    }
+
+    .heatmap-grid-container {
+        @apply overflow-x-auto;
+        height: 180px;
+    }
+
+    .heatmap-grid {
+        min-width: 600px;
+        height: 100%;
+    }
+
+    .widget {
+        @apply p-4;
+    }
+
+    table {
+        @apply block overflow-x-auto whitespace-nowrap;
+        min-width: 700px;
+    }
+}

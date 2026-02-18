@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Base Container */
+.alert-item {
+  @apply border-l-4 p-3 rounded-r-lg mb-3 transition-colors;
+}
+
+/* Severity Variants */
+.alert-high {
+  @apply bg-red-50 border-red-500;
+}
+
+.alert-medium {
+  @apply bg-yellow-50 border-yellow-400;
+}
+
+.alert-spike {
+  background-color: #f3f4f6;
+  border-left-color: #808080;
+}
+
+/* Header & Typography */
+.alert-header {
+  @apply flex justify-between items-center mb-1;
+}
+
+.alert-name {
+  @apply font-bold text-gray-800 text-sm;
+}
+
+.alert-description {
+  @apply text-xs text-gray-600 leading-tight;
+}
+
+/* Status Tags */
+.alert-tag {
+  @apply text-[10px] px-1.5 py-0.5 rounded font-bold uppercase;
+}
+
+.alert-tag-high {
+  @apply bg-red-200 text-red-800;
+}
+
+.alert-tag-medium {
+  @apply bg-yellow-200 text-yellow-800;
+}
+
+.alert-tag-spike {
+  background-color: #808080;
+  @apply text-white;
+}
