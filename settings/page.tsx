@@ -5,12 +5,12 @@ import { requireSession } from "@/lib/require-session";
 export default async function Settings() {
     const session = await requireSession("/settings");
     if (session.user.admin) {
-        return <SettingsClient usersToApprove={await getUsersToApprove()} />;
+        return <SettingsClient usersToApprove={await getUsersToApprove(session?.user?.id || "")} />;
     }
     return <SettingsClient usersToApprove={[]} />;
 }
 
-async function getUsersToApprove() {
-    const result = await pool.query('SELECT email, id FROM "user" WHERE approved = FALSE ORDER BY "createdAt" DESC LIMIT 10');
-    return result.rows.map((row) => ({ email: row.email, id: row.id }));
+async function getUsersToApprove(selfId: string) {
+    const result = await pool.query('SELECT * FROM "user" WHERE id != $1 ORDER BY approved ASC, admin DESC', [selfId]);
+    return result.rows.map((row) => ({ email: row.email, id: row.id, admin: row.admin, approved: row.approved }));
 }

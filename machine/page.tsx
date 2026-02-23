@@ -1,6 +1,7 @@
 import { getMachineList } from "@/lib/frontendData";
 import MachinePageClient from "./machinePageClient";
 import { requireSession } from "@/lib/require-session";
+import { fetchMachinePredictions } from "@/lib/actions";
 
 export interface ChartValue {
   time: number;
@@ -55,13 +56,12 @@ export async function getMachineData(machineId: string, sensorType: string): Pro
     const site = 'site_1'; 
     const end = Math.floor(Date.now() / 1000);
     const timeRangeHours = 120;
-    const start = end - (timeRangeHours * 3600);
-    const step = 3600; 
+    const start = end - (timeRangeHours * 3600); 
     const promQuery = `{__name__="${sensorType}", site="${site}"}`;
     const encodedQuery = encodeURIComponent(promQuery);
 
     const res = await fetch(
-      `http://${host}:${port}/api/v1/query_range?query=${encodedQuery}&start=${start}&end=${end}&step=${step}`,
+      `http://${host}:${port}/api/v1/query_range?query=${encodedQuery}&start=${start}&end=${end}&max_points=25`,
       { cache: 'no-store' }
     );
     
@@ -121,8 +121,18 @@ export default async function MachinePage({
   if (queriedId) {
     initialMachineId = queriedId;
   }
+  
+  const initialMachineDbId = machines.find(m => m.name === initialMachineId)?.id || "";
+  
+  const [initialChartData, { ok: predOk, data: allPredictions }] = await Promise.all([
+    getMachineData(initialMachineId, sensor),
+    fetchMachinePredictions()
+  ]);
 
-  const initialChartData = await getMachineData(initialMachineId, sensor);
+  const machinePredictions = predOk ? allPredictions.filter((p: any) => p.machine_id === initialMachineDbId) : [];
+
+  const topPrediction = machinePredictions.filter((p: any) => new Date(p.fail_timestamp) > 
+  new Date()).sort((a: any, b: any) => b.certainty - a.certainty)[0] || null;
 
   return (
     <MachinePageClient 
@@ -131,6 +141,8 @@ export default async function MachinePage({
       initialMachineId={initialMachineId}
       initialChartData={initialChartData}
       initialSensor={sensor}
+      topPrediction={predOk ? topPrediction : null}
+      predictions={predOk ? machinePredictions : []}
       metricsName={metricsName}
       fetchMachineData={getMachineData}
     />

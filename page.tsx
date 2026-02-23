@@ -4,8 +4,19 @@ import { AlertItem } from "./components/AlertItem/AlertItem";
 import Link from "next/link";
 import { requireSession } from "@/lib/require-session";
 import { pool } from "@/lib/db";
+import { fetchMachinePredictions } from "@/lib/actions";
 
 import "./page.css";
+
+interface Prediction {
+  id: number;
+  kind: string;
+  certainty: number;
+  fail_timestamp: Date;
+  created_at: Date;
+  description: string;
+  machine_name: string;
+}
 
 async function getMachineData() {
   const query = `
@@ -17,7 +28,7 @@ async function getMachineData() {
     FROM machines m
     LEFT JOIN (
       SELECT DISTINCT ON (machine_id) machine_id, kind
-      FROM predictions
+      FROM predictions WHERE completed = False
       ORDER BY machine_id, created_at DESC
     ) p ON m.id = p.machine_id
     ORDER BY m.id ASC
@@ -46,7 +57,7 @@ async function getDonutData() {
     FROM machines m
     LEFT JOIN (
         SELECT DISTINCT ON (machine_id) machine_id, kind
-        FROM predictions
+        FROM predictions WHERE completed = False
         ORDER BY machine_id, created_at DESC
     ) p ON m.id = p.machine_id
     GROUP BY status;
@@ -79,38 +90,13 @@ async function getDonutData() {
   }
 }
 
-async function getAlerts() {
-  const query = `
-    SELECT DISTINCT ON (p.machine_id)
-        m.name as machine_name,
-        p.kind as severity,
-        p.created_at
-    FROM predictions p
-    JOIN machines m ON p.machine_id = m.id
-    WHERE p.kind != 'GOOD'
-    ORDER BY p.machine_id, p.created_at DESC;
-  `;
-
-  try {
-    const { rows } = await pool.query(query);
-
-    return rows.map((alert) => ({
-      machineName: alert.machine_name,
-      fault: "NA", // needs to be implemented into the DB
-      severity: alert.severity,
-    }));
-  } catch (err) {
-    console.error("Alerts Query Error:", err);
-    return [];
-  }
-}
-
 export default async function Dashboard() {
   await requireSession("/");
 
   const machines = await getMachineData();
   const status_counts = await getDonutData();
-  const predictions = await getAlerts();
+  const { ok: predictionsOk, data: allAlerts } = await fetchMachinePredictions();
+  if (!predictionsOk) return <div>Error</div>;
 
   return (
     <main className="dashboard">
@@ -159,13 +145,17 @@ export default async function Dashboard() {
         <div className="alerts-card">
           <h2 className="card-title">Alerts</h2>
           <div className="alerts-list">
-            {predictions.length > 0 ? (
-              predictions.map((alert, index) => (
+            {allAlerts.length > 0 ? (
+              allAlerts.map((alert : Prediction) => (
                 <AlertItem
-                  key={index}
-                  machineName={alert.machineName}
-                  fault={alert.fault}
-                  severity={alert.severity}
+                  key={alert.id}
+                  machineName={alert.machine_name}
+                  fault={alert.description}
+                  severity={alert.kind as "Y1" | "Y2" | "Spike"}
+                  percentage={alert.certainty}
+                  created={alert.created_at}
+                  failDate={alert.fail_timestamp}
+                  now={Date.now()}
                 />
               ))
             ) : (

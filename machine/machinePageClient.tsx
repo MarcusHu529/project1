@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { LineChart } from "../components/LineChart";
 import { MachineList } from "../components/MachineList/MachineList";
 import { MachineChartData } from "./page";
+import { useRouter } from "next/navigation";
+
 import "./page.css";
 
 interface Machine {
+  id: string;
   name: string;
   group_name: string;
   group_id: string;
@@ -18,12 +20,25 @@ interface Group {
   id: string;
 }
 
+interface Prediction {
+  id: number;
+  kind: string;
+  certainty: number;
+  fail_timestamp: Date;
+  created_at: Date;
+  description: string;
+  machine_name: string;
+  machine_id: string;
+}
+
 interface Props {
   groups: Group[];
   machines: Machine[];
   initialMachineId: string;
   initialChartData: MachineChartData[];
   initialSensor: string;
+  topPrediction: Prediction | null; 
+  predictions: Prediction[];
   metricsName: string[];
   fetchMachineData: (machineId: string, sensor: string) => Promise<MachineChartData[]>;
 }
@@ -37,13 +52,23 @@ const generateHeatmapData = () => {
   return data;
 };
 
-export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, initialSensor, metricsName, fetchMachineData }: Props) {
-  const router = useRouter();
-  const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
+
+
+export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, initialSensor, 
+  metricsName, fetchMachineData, topPrediction, predictions }: Props) {  const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
   const [sensorType, setSensorType] = useState<string>(initialSensor);
   const [chartData, setChartData] = useState<MachineChartData[]>(initialChartData);
   const [heatmapData, setHeatmapData] = useState<{day: number, value: number}[]>([]);
+  const [prediction, setPrediction] = useState<Prediction | null>(topPrediction);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setHydrated(true);
+    }, 0);
+  }, []);
+  const router = useRouter()
   const isInitialMount = useRef(true);
+  
 
   const formattedChartData = useMemo(() => {
     return chartData.map(series => ({
@@ -73,6 +98,13 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
     
     if (selectedMachine) {
       fetchMachineData(selectedMachine, sensorType).then(data => setChartData(data));
+      
+      const machineId = machines.find(m => m.name === selectedMachine)?.id || "";
+      const machinePreds = predictions.filter(p => p.machine_id === machineId);
+      const top = machinePreds
+        .filter(p => new Date(p.fail_timestamp) > new Date())
+        .sort((a, b) => b.certainty - a.certainty)[0] || null;
+      setPrediction(top);
     }
   }, [selectedMachine, sensorType, fetchMachineData]);
 
@@ -136,8 +168,20 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
               <div className="prediction-grid">
                 <div className="prediction-box purple">
                   <span className="label">Predicted Failure</span>
-                  <span className="value">12d</span>
-                  <span className="sub-label">Potential Breakdown</span>
+                  {prediction ? (
+                    <>
+                      <span className="value">
+                        {hydrated ? Math.ceil((new Date(prediction.fail_timestamp).getTime() - Date.now()) / 86400000) : '-'}d
+                      </span>
+                      <span className="sub-label">{prediction.description}</span>
+                      <span className="sub-label">{Math.round(prediction.certainty * 100)}% confidence</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="value">-</span>
+                      <span className="sub-label">No prediction available</span>
+                    </>
+                  )}
                 </div>
                 <div className="prediction-box light-gray issues-box">
                   <span className="label">Top 3 Historical Breakdowns</span>
@@ -155,7 +199,6 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
             <div className="widget alert-history">
               <div className="widget-header">
                 <h2>Alert History</h2> 
-                <button className="edit-btn">Edit</button>
               </div>
               <table>
                 <thead>
@@ -168,48 +211,21 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>03-14-2026</td>
-                    <td>15:12:09</td>
-                    <td>Temperature spike detected</td>
-                    <td>Low</td>
-                    <td>77%</td>
-                  </tr>
-                  <tr>
-                    <td>05-20-2025</td>
-                    <td>12:09:33</td>
-                    <td>Vibration anomaly</td>
-                    <td>Low</td>
-                    <td>80%</td>
-                  </tr>
-                  <tr>
-                    <td>05-20-2025</td>
-                    <td>12:09:33</td>
-                    <td>Vibration anomaly</td>
-                    <td>Low</td>
-                    <td>80%</td>
-                  </tr>
-                  <tr>
-                    <td>05-20-2025</td>
-                    <td>12:09:33</td>
-                    <td>Vibration anomaly</td>
-                    <td>Low</td>
-                    <td>80%</td>
-                  </tr>
-                  <tr>
-                    <td>05-20-2025</td>
-                    <td>12:09:33</td>
-                    <td>Vibration anomaly</td>
-                    <td>Low</td>
-                    <td>80%</td>
-                  </tr>
-                  <tr>
-                    <td>05-20-2025</td>
-                    <td>12:09:33</td>
-                    <td>Vibration anomaly</td>
-                    <td>Low</td>
-                    <td>80%</td>
-                  </tr>
+                  {predictions.length > 0 ? (
+                    predictions.map((p) => (
+                      <tr key={p.id}>
+                        <td>{hydrated ? new Date(p.created_at).toLocaleDateString() : '-/-/----'}</td>
+                        <td>{hydrated ? new Date(p.created_at).toLocaleTimeString() : '-:--:--'}</td>
+                        <td>{p.description}</td>
+                        <td>{p.kind}</td>
+                        <td>{Math.round(p.certainty * 100)}%</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5}>No alert history available</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

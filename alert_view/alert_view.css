@@ -6,7 +6,7 @@
     }
 
     .alert-grid-layout {
-        @apply grid grid-cols-[200px_1fr_1fr] grid-rows-[auto_1fr] gap-x-10 gap-y-5 px-10 pb-[40px] flex-1;
+        @apply grid grid-cols-[200px_1fr_1fr] grid-rows-[auto_1fr] gap-x-10 gap-y-5 px-10 pb-[40px] pt-4 flex-1 overflow-hidden;
     }
 
     .search-container {
