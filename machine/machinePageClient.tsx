@@ -129,7 +129,7 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
   };
 
   return (
-    <main className="dashboard">
+    <main className="styles.dashboard">
       <div className="main-container">
         <div className="machine-header-title block md:hidden pt-6 px-4 pb-0 text-center text-2xl font-bold text-[#35699f] capitalize">
           {selectedMachine || 'Select a machine'}

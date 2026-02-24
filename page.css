@@ -89,7 +89,7 @@
 }
 
 .machines-list {
-    @apply space-y-2 overflow-y-auto flex-1;
+    @apply space-y-2 overflow-y-auto;
 }
 
 .model-card {
@@ -121,6 +121,16 @@
     .machines-card {
         @apply col-span-1 min-h-[20vh] h-auto;
         @apply overflow-hidden;
+    }
+
+    .alerts-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .machines-list {
+        max-height: 400px;
+        overflow-y: auto;
     }
 
     .overview-content {
