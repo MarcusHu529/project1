@@ -56,12 +56,13 @@ export async function getMachineData(machineId: string, sensorType: string): Pro
     const site = 'site_1'; 
     const end = Math.floor(Date.now() / 1000);
     const timeRangeHours = 120;
-    const start = end - (timeRangeHours * 3600); 
+    const start = end - (timeRangeHours * 3600);
+    const step = 3600; 
     const promQuery = `{__name__="${sensorType}", site="${site}"}`;
     const encodedQuery = encodeURIComponent(promQuery);
 
     const res = await fetch(
-      `http://${host}:${port}/api/v1/query_range?query=${encodedQuery}&start=${start}&end=${end}&max_points=25`,
+      `http://${host}:${port}/api/v1/query_range?query=${encodedQuery}&start=${start}&end=${end}&step=${step}`,
       { cache: 'no-store' }
     );
     

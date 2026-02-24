@@ -1,21 +1,12 @@
 @import "tailwindcss";
 
-body {
-    background: linear-gradient(to right, #7db4d6, #35699f);
-    color: #000000;
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
-    overflow-y: hidden;
-    padding-bottom: 5%;
-    margin: 0;
-}
 
 .dashboard {
-    @apply w-full p-4 flex flex-col;
+    @apply w-full h-full p-4 flex flex-col overflow-hidden;
 }
 
 .main-container {
-    @apply flex-1 bg-white/90 rounded-[40px] shadow-2xl flex min-h-0;
+    @apply flex-1 bg-white/90 rounded-[40px] shadow-2xl flex min-h-0 pb-16;
     backdrop-filter: blur(10px);
 }
 
@@ -175,6 +166,10 @@ td {
 }
 
 @media (max-width: 670px) {
+    body {
+        overflow-y: auto;
+    }
+
     .dashboard {
         @apply p-2 h-auto pb-24;
     }

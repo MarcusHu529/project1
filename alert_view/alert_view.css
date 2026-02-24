@@ -31,8 +31,12 @@
 }
 
 @media (max-width: 670px) {
+    .alert-page-container {
+        @apply h-auto min-h-full overflow-visible;
+    }
+
     .alert-grid-layout {
-        @apply grid-cols-1 grid-rows-none gap-5 px-5;
+        @apply grid-cols-1 grid-rows-none gap-5 px-5 h-auto overflow-visible pb-16;
     }
     
     .search-container {

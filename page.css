@@ -108,8 +108,12 @@
 
 /* MOBILE BREAKPOINT */
 @media (max-width: 670px) {
+    .dashboard {
+        @apply h-auto overflow-visible pb-16; 
+    }
+
     .bento-grid {
-        @apply grid-cols-1 grid-rows-none h-auto gap-4;
+        @apply grid-cols-1 grid-rows-none h-auto gap-4 overflow-visible pb-16;
     }
 
     .overview-card,
