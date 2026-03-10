@@ -3,16 +3,16 @@
 import { BackButton } from "../components/BackButton"
 import { LogOutButton } from "../components/LogOutButton"
 import { ImportButton } from "../components/ImportButton";
-import styles from './settings.module.css'
 import { approveUser, deleteUser, demoteUser, promoteUser } from "./actions";
 import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
-import { handleSubscribeAction } from "@/app/actions/notifications";
+import { handleSubscribeAction, deletePushSubscriptionAction, getDevicePushSubscription } from "@/app/actions/notifications";
 import { getUserSettings, updateUserSettings } from "@/lib/actions";
-import { deletePushSubscriptionAction } from "@/app/actions/notifications";
+
+import styles from './settings.module.css'
 
 // Convert VAPID key for browser use
-const urlB64ToUint8Array = (base64String: any) => {
+const urlB64ToUint8Array = (base64String: string) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
     .replace(/\-/g, "+")
@@ -153,23 +153,41 @@ export default function SettingsClient({ usersToApprove }: { usersToApprove: { e
   // Fetch User Settings from DB on mount (to set initial checkbox state)
   useEffect(() => {
     async function loadSettings() {
-      if (!session?.user?.id) return;
-
-      const { ok, user } = await getUserSettings(session.user.id);
-
-      if (ok && user) {
-        setPrefs({
-          // Map DB columns to our state
-          push: user.push_notifications || false, // Maps to 'phone_notifications' arg later
-          email: user.email_notifications || false,
-        });
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const { ok, user } = await getUserSettings(session.user.id);
+
+        let isPushEnabled = false;
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+
+          if (ok && user && subscription?.endpoint) {
+            const result = await getDevicePushSubscription(subscription.endpoint);
+            isPushEnabled = result.isRegistered ?? false;
+          }
+        } catch (swErr) {
+          console.warn("Service Worker not ready yet:", swErr);
+        }
+
+        if (ok && user) {
+          setPrefs({
+            push: isPushEnabled,
+            email: user.email_notifications || false,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (session?.user?.id) {
-        loadSettings();
-    }
+    loadSettings();
   }, [session?.user?.id]);
 
 
@@ -242,6 +260,13 @@ export default function SettingsClient({ usersToApprove }: { usersToApprove: { e
       } else {
         await unsubscribeUser();
       }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      setPrefs({
+        push: !!subscription,
+        email: prefs.email,
+      });
 
       alert("Settings saved successfully!");
     } catch (err: any) {
@@ -256,85 +281,57 @@ export default function SettingsClient({ usersToApprove }: { usersToApprove: { e
   };
 
   return (
-    <main>
-      <header className={styles.header}>
-        <div className={styles.headerButtons}>
+        <main>
+      <div className={styles.pageGrid}>
+        <div className={styles.sidebar}>
           <BackButton />
         </div>
-        <div className={styles.headerInner}>
-          <h1 className={styles.title}>Settings</h1>
-        </div>
-      </header>
-
-      <div className={styles.headerDivider}></div>
-
-      <div className={styles.body}>
-        <div className={styles.notifications}>
-          <h1 className={styles.bodyTitle}>Notifications</h1>
-          <fieldset className={styles.bodyContent} disabled={loading || saving}>
-            <legend>Opt in for notifications</legend>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <input
-                type="checkbox"
-                id="push"
-                checked={prefs.push}
-                onChange={() => handleToggle("push")}
-              />
-              <label htmlFor="push" style={{ cursor: "pointer" }}>Push Notifications</label>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <input
-                type="checkbox"
-                id="email"
-                checked={prefs.email}
-                onChange={() => handleToggle("email")}
-              />
-              <label htmlFor="email" style={{ cursor: "pointer" }}>Email</label>
-            </div>
-
-            <button
-                onClick={handleSave}
-                style={{
-                    marginTop: "16px",
-                    padding: "8px 16px",
-                    backgroundColor: "#2563eb",
-                    color: "white",
-                    fontWeight: 600,
-                    borderRadius: "4px",
-                    border: "none",
-                    cursor: saving ? "wait" : "pointer",
-                    opacity: saving ? 0.7 : 1
-                }}
-            >
+        <div className={styles.body}>
+          <div className={styles.subheader}>
+            <h1 className={styles.title}>Settings</h1>
+          </div>
+          <div className={styles.notifications}>
+            <h1 className={styles.bodyTitle}>Notifications</h1>
+            <fieldset className={styles.bodyContent} disabled={loading || saving}>
+              <legend>Opt in for notifications</legend>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <input type="checkbox" id="push" checked={prefs.push} onChange={() => handleToggle("push")} />
+                <label htmlFor="push" style={{ cursor: "pointer" }}>Push Notifications</label>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <input type="checkbox" id="email" checked={prefs.email} onChange={() => handleToggle("email")} />
+                <label htmlFor="email" style={{ cursor: "pointer" }}>Email</label>
+              </div>
+              <button className={styles.saveButton} onClick={handleSave}> 
                 {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </fieldset>
-        </div>
-
-        <div className={styles.importData}>
-          <h1 className={styles.bodyTitle}>Import SAP Data</h1>
-          <div className={styles.bodyContent}>
-            <ImportButton />
+              </button>
+            </fieldset>
           </div>
-        </div>
 
-        {usersToApprove.length > 0 && (
-          <div className={styles.usersToApprove}>
-            <h1 className={styles.bodyTitle}>Users to Approve</h1>
+          <div className={styles.importData}>
+            <h1 className={styles.bodyTitle}>Import SAP Data</h1>
             <div className={styles.bodyContent}>
-              <ul>
-                {usersToApprove.map((user) => (
-                  <ApproveUser key={user.id} email={user.email} id={user.id} admin={user.admin} approved={user.approved} />
-                ))}
-              </ul>
+              <ImportButton />
             </div>
           </div>
-        )}
 
-        <div className={styles.logOut}>
-          <LogOutButton />
+          {usersToApprove.length > 0 && (
+            <div className={styles.usersToApprove}>
+              <h1 className={styles.bodyTitle}>Users to Approve</h1>
+              <div className={styles.bodyContent}>
+                <ul>
+                  {usersToApprove.map((user) => (
+                    <ApproveUser key={user.id} email={user.email} id={user.id} admin={user.admin} approved={user.approved} />
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.logOut}>
+            <LogOutButton />
+          </div>
+
         </div>
       </div>
     </main>

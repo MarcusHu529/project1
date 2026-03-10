@@ -1,7 +1,6 @@
 import { DonutChart } from "./components/DonutChart/DonutChart";
 import { MachineItem } from "./components/MachineItem/MachineItem";
 import { AlertItem } from "./components/AlertItem/AlertItem";
-import Link from "next/link";
 import { requireSession } from "@/lib/require-session";
 import { pool } from "@/lib/db";
 import { fetchMachinePredictions } from "@/lib/actions";
@@ -16,6 +15,7 @@ interface Prediction {
   created_at: Date;
   description: string;
   machine_name: string;
+  completed: boolean;
 }
 
 async function getMachineData() {
@@ -96,10 +96,14 @@ export default async function Dashboard() {
   const machines = await getMachineData();
   const status_counts = await getDonutData();
   const { ok: predictionsOk, data: allAlerts } = await fetchMachinePredictions();
+  const highPriorityAlerts = allAlerts.filter((alert: Prediction) => alert.kind === "Y1")
+  .sort((a: Prediction, b: Prediction) => (new Date(a.fail_timestamp).getTime() - new Date(b.fail_timestamp).getTime())>0);
+  const daysUntilNextAlert = highPriorityAlerts[0]? Math.ceil((new Date(highPriorityAlerts[0].fail_timestamp).getTime() - Date.now()) / (1000 * 60 * 60 * 24)): null;
+  const uncompletedAlerts = highPriorityAlerts.filter((alert: Prediction) => !alert.completed);
   if (!predictionsOk) return <div>Error</div>;
 
   return (
-    <main className="dashboard">
+    <main className="home-dashboard">
       <div className="bento-grid">
         <div className="overview-card">
           <h2 className="card-title">Overview</h2>
@@ -111,12 +115,12 @@ export default async function Dashboard() {
               </div>
               <div className="stat-box">
                 <span className="stat-label">High Priority Alerts</span>
-                <span className="stat-value">7</span>
+                <span className="stat-value">{uncompletedAlerts.length}</span>
               </div>
               <div className="stat-box">
-                <span className="stat-label">Last Failure</span>
-                <span className="stat-value">2d</span>
-                <span className="stat-detail">Extruder 21 - Leak</span>
+                <span className="stat-label">Next Failure</span>
+                <span className="stat-value">{daysUntilNextAlert}d</span>
+                <span className="stat-detail">{highPriorityAlerts[0].machine_name} : {highPriorityAlerts[0].description}</span>
               </div>
               <div className="stat-box">
                 <span className="stat-label">Predicted Downtime</span>

@@ -6,17 +6,16 @@ body {
     background: linear-gradient(to right, #7db4d6, #35699f);
     color: #000000;
     font-family: Arial, sans-serif;
-    padding: 0;
     height: 100vh;
-    overflow: hidden;
+    overflow-y: hidden;
 }
 
 header {
-    @apply w-full h-[10vh];
+    @apply w-full h-[12vh];
 }
 
 main {
-    height: 85vh;
+    height: 87vh;
     padding-bottom: 2rem;
     box-sizing: border-box;
 }
@@ -26,7 +25,7 @@ main {
         height: auto;
         min-height: 100dvh;
         overflow-y: auto;
-        padding-bottom: 1rem;
+        padding-bottom: 2rem;
         overscroll-behavior: auto;
     }
     

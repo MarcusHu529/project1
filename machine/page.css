@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 
-.dashboard {
-    @apply w-full h-full p-4 flex flex-col overflow-hidden;
+.machine-dashboard {
+    @apply w-full pt-4 px-4 flex flex-col overflow-hidden;
 }
 
 .main-container {
-    @apply flex-1 bg-white/90 rounded-[40px] shadow-2xl flex min-h-0 pb-16;
+    @apply flex-1 bg-white/90 rounded-[40px] flex min-h-0;
     backdrop-filter: blur(10px);
 }
 
