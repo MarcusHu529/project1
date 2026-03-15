@@ -71,16 +71,20 @@
     @apply min-h-[250px] mb-4 w-full;
 }
 
+.controls-container {
+    @apply flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full;
+}
+
 .sensor-selector {
-    @apply flex items-center gap-2;
+    @apply flex items-center gap-2 w-full sm:w-auto;
 }
 
 .sensor-selector label {
-    @apply font-semibold;
+    @apply font-semibold min-w-[60px];
 }
 
 .sensor-selector select {
-    @apply px-3 py-1 border border-gray-300 rounded-md;
+    @apply px-3 py-1 border border-gray-300 rounded-md w-full sm:w-auto truncate;
 }
 
 .stats-column {

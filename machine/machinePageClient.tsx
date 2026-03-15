@@ -40,7 +40,7 @@ interface Props {
   topPrediction: Prediction | null; 
   predictions: Prediction[];
   metricsName: string[];
-  fetchMachineData: (machineId: string, sensor: string) => Promise<MachineChartData[]>;
+  fetchMachineData: (machineId: string, sensor: string, timeRangeHours: number, step: number) => Promise<MachineChartData[]>;
 }
 
 const generateHeatmapData = () => {
@@ -52,11 +52,11 @@ const generateHeatmapData = () => {
   return data;
 };
 
-
-
 export default function MachinePageClient({ groups, machines, initialMachineId, initialChartData, initialSensor, 
-  metricsName, fetchMachineData, topPrediction, predictions }: Props) {  const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
+  metricsName, fetchMachineData, topPrediction, predictions }: Props) {  
+  const [selectedMachine, setSelectedMachine] = useState<string | null>(initialMachineId);
   const [sensorType, setSensorType] = useState<string>(initialSensor);
+  const [timeRange, setTimeRange] = useState<number>(168);
   const [chartData, setChartData] = useState<MachineChartData[]>(initialChartData);
   const [heatmapData, setHeatmapData] = useState<{day: number, value: number}[]>([]);
   const [prediction, setPrediction] = useState<Prediction | null>(topPrediction);
@@ -97,7 +97,9 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
     }
     
     if (selectedMachine) {
-      fetchMachineData(selectedMachine, sensorType).then(data => setChartData(data));
+      const step = Math.floor((timeRange * 3600) / 30);
+
+      fetchMachineData(selectedMachine, sensorType, timeRange, step).then(data => setChartData(data));
       
       const machineId = machines.find(m => m.name === selectedMachine)?.id || "";
       const machinePreds = predictions.filter(p => p.machine_id === machineId);
@@ -106,7 +108,7 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
         .sort((a, b) => b.certainty - a.certainty)[0] || null;
       setPrediction(top);
     }
-  }, [selectedMachine, sensorType, fetchMachineData]);
+  }, [selectedMachine, sensorType, timeRange, fetchMachineData]);
 
   const handleSelectMachine = (name: string) => {
     setSelectedMachine(name);
@@ -152,16 +154,30 @@ export default function MachinePageClient({ groups, machines, initialMachineId, 
               <div className="chart-container">
                   <LineChart chartData={formattedChartData} />
               </div>
-              <div className="sensor-selector">
-                <label>Sensor:</label>
-                <select value={sensorType} onChange={(e) => handleSensorChange(e.target.value)}>
-                  {metricsName.map(metric => (
-                    <option key={metric} value={metric}>
-                      {metric}
-                    </option>
-                  ))}
-                </select>
+              
+              <div className="flex flex-col md:flex-row gap-4 mt-4 md:items-center">
+                <div className="sensor-selector mb-0">
+                  <label>Sensor:</label>
+                  <select value={sensorType} onChange={(e) => handleSensorChange(e.target.value)}>
+                    {metricsName.map(metric => (
+                      <option key={metric} value={metric}>
+                        {metric}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="sensor-selector mb-0">
+                  <label>Range:</label>
+                  <select value={timeRange} onChange={(e) => setTimeRange(Number(e.target.value))}>
+                    <option value={24}>1 Day</option>
+                    <option value={168}>7 Days</option>
+                    <option value={336}>14 Days</option>
+                    <option value={720}>30 Days</option>
+                  </select>
+                </div>
               </div>
+
             </div>
 
             <div className="stats-column">

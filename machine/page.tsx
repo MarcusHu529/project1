@@ -48,16 +48,14 @@ export async function getMetrics(): Promise<string[]> {
   }
 }
 
-export async function getMachineData(machineId: string, sensorType: string): Promise<MachineChartData[]> {
+export async function getMachineData(machineId: string, sensorType: string, timeRangeHours: number = 168, step: number = 20160): Promise<MachineChartData[]> {
   "use server";
   try {
     const host = process.env.PROMETHEUS_HOST || 'victoriametrics';
     const port = process.env.PROMETHEUS_PORT || '8428';
     const site = 'site_1'; 
     const end = Math.floor(Date.now() / 1000);
-    const timeRangeHours = 120;
     const start = end - (timeRangeHours * 3600);
-    const step = 3600; 
     const promQuery = `{__name__="${sensorType}", site="${site}"}`;
     const encodedQuery = encodeURIComponent(promQuery);
 
@@ -126,7 +124,7 @@ export default async function MachinePage({
   const initialMachineDbId = machines.find(m => m.name === initialMachineId)?.id || "";
   
   const [initialChartData, { ok: predOk, data: allPredictions }] = await Promise.all([
-    getMachineData(initialMachineId, sensor),
+    getMachineData(initialMachineId, sensor, 168, 20160),
     fetchMachinePredictions()
   ]);
 

@@ -18,6 +18,18 @@ interface Prediction {
   completed: boolean;
 }
 
+interface MachineRow {
+  id: number;
+  name: string;
+  site_id: string;
+  latest_status: string;
+}
+
+interface DonutRow {
+  status: string;
+  value: number;
+}
+
 async function getMachineData() {
   const query = `
     SELECT
@@ -35,9 +47,9 @@ async function getMachineData() {
   `;
 
   try {
-    const { rows } = await pool.query(query);
+    const { rows }: { rows: MachineRow[] } = await pool.query(query);
 
-    return rows.map((machine, index) => ({
+    return rows.map((machine: MachineRow, index: number) => ({
       id: index + 1,
       name: machine.name,
       zone: machine.site_id,
@@ -64,7 +76,7 @@ async function getDonutData() {
   `;
 
   try {
-    const { rows } = await pool.query(query);
+    const { rows }: { rows: DonutRow[] } = await pool.query(query);
     const counts = Object.fromEntries(rows.map((r) => [r.status, r.value]));
 
     // Convert notification "kind" from sheet to display name
